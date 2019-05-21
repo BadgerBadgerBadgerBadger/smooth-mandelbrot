@@ -16,7 +16,7 @@ let segmentLength
 const xBounds = { min: -3, max: 1 }
 const yBounds = { min: -1.5, max: 1.5 }
 
-let maxIters = 200
+let maxIters = 256
 
 self.onmessage = function onmessage(event) {
 

@@ -7,7 +7,6 @@ const painter = new Worker('/js/painter.js')
 function setup() {
 
     canvas = document.createElement('canvas')
-    canvas.setAttribute('id', 'mainCanvas')
 
     canvas.width = width
     canvas.height = height
@@ -26,9 +25,6 @@ function setup() {
 
     document.querySelector('body').appendChild(canvas)
     log('setup done')
-}
-
-function draw() {
 }
 
 function clickListener(e) {
@@ -55,7 +51,5 @@ function zoomListener(event) {
         painter.postMessage({message: 'draw', zoom})
     }
 }
-
-setInterval(draw, 50)
 
 setup()
