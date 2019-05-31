@@ -1,7 +1,7 @@
 let ctx
 let drawing = false
 
-const numOfAcolytes =  navigator.hardwareConcurrency || 4
+const numOfAcolytes = navigator.hardwareConcurrency || 4
 let acolytes
 let segmentLength
 
@@ -13,21 +13,21 @@ let maxIters = 256
 function painter_setup(data) {
     ctx = canvas.getContext('2d')
 
-    segmentLength = canvas.width / numOfAcolytes
+    segmentLength = canvas.height / numOfAcolytes | 0
 
     acolytes = _.times(numOfAcolytes, n => {
 
-        const xOffset = n * segmentLength
+        const yOffset = n * segmentLength
         const acolyte = new Worker('/js/acolyte.js')
 
         acolyte.onmessage = onAcolyteMessage
 
         acolyte.id = n
-        acolyte.xOffset = xOffset
+        acolyte.offset = { x: 0, y: yOffset }
         acolyte.segmentLength = segmentLength
         acolyte.dimensions = {
-            width: segmentLength,
-            height: canvas.height
+            width: canvas.width,
+            height: segmentLength
         };
 
         acolyte.postMessage({
@@ -37,7 +37,7 @@ function painter_setup(data) {
                 width: canvas.width,
                 height: canvas.height
             },
-            xOffset,
+            offset: acolyte.offset,
             xBounds,
             yBounds,
             maxIters
@@ -57,7 +57,7 @@ function onAcolyteMessage(event) {
             console.log(`Rendered tile in ${event.data.time}ms`)
             let data = new Uint8ClampedArray(event.data.buffer);
             let idata = new ImageData(data, acolyte.dimensions.width, acolyte.dimensions.height);
-            ctx.putImageData(idata, acolyte.xOffset, 0)
+            ctx.putImageData(idata, acolyte.offset.x, acolyte.offset.y)
             break
     }
 }

@@ -4,7 +4,7 @@ importScripts('/js/compy-stuff.js')
 let id
 let xBounds
 let yBounds
-let xOffset
+let offset
 let maxDimensions
 let dimensions
 let maxIters
@@ -16,7 +16,7 @@ self.onmessage = function onmessage(event) {
     switch (event.data.message) {
 
         case 'setup':
-            ({ id, xOffset, xBounds, yBounds, dimensions, maxDimensions, maxIters } = event.data)
+            ({ id, offset, xBounds, yBounds, dimensions, maxDimensions, maxIters } = event.data)
             draw()
             break
 
@@ -33,11 +33,10 @@ function draw() {
     const c = { re: 0, im: 0 };
 
     for (let i = 0; i < data.length; i += 4) {
-        let x = (i / 4) % dimensions.width;
-        let y = (i / 4) / dimensions.width | 0;
-        const ax = x + xOffset
+        let x = offset.x + (i / 4) % dimensions.width;
+        let y = offset.y + (i / 4) / dimensions.width | 0;
 
-        c.re = map(ax, 0, maxDimensions.width, xBounds.min, xBounds.max);
+        c.re = map(x, 0, maxDimensions.width, xBounds.min, xBounds.max);
         c.im = map(y, 0, maxDimensions.height, yBounds.min, yBounds.max);
 
         const result = testMandelbrot(c, maxIters)
