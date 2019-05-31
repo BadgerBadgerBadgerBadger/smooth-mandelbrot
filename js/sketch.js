@@ -1,11 +1,10 @@
-let canvas
-const width = 600
-const height = 450
+let canvas = document.getElementById('fractal')
+const { width, height } = canvas.getBoundingClientRect();
+const xBounds = { min: -3, max: 1 }
+const yBounds = { min: -1.5, max: 1.5 }
+yBounds.max = yBounds.min + (xBounds.max - xBounds.min) * height / width;
 
 function setup() {
-
-    canvas = document.createElement('canvas')
-
     canvas.width = width
     canvas.height = height
     document.addEventListener('keydown', zoomListener, false)
@@ -14,7 +13,6 @@ function setup() {
     const message = { message: 'setup', canvas };
     painter_setup(message)
 
-    document.querySelector('body').appendChild(canvas)
     log('setup done')
 }
 

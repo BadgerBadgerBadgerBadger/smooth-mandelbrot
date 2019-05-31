@@ -5,8 +5,6 @@ const numOfAcolytes = navigator.hardwareConcurrency || 4
 let acolytes
 let segmentLength
 
-const xBounds = { min: -3, max: 1 }
-const yBounds = { min: -1.5, max: 1.5 }
 
 let maxIters = 256
 
@@ -96,8 +94,6 @@ function painter_draw(data) {
 
         yBounds.min -= yZoom
         yBounds.max += yZoom
-
-        console.log(`New Bounds`, xBounds, yBounds)
     }
 
     for (const acolyte of acolytes) {
