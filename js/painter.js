@@ -53,8 +53,8 @@ function onAcolyteMessage(event) {
     log(`Message from acolyte: ${acolyte.id}`)
 
     switch (event.data.message) {
-
         case 'draw':
+            console.log(`Rendered tile in ${event.data.time}ms`)
             let data = new Uint8ClampedArray(event.data.buffer);
             let idata = new ImageData(data, acolyte.dimensions.width, acolyte.dimensions.height);
             ctx.putImageData(idata, acolyte.xOffset, 0)

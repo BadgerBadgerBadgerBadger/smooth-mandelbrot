@@ -27,17 +27,18 @@ self.onmessage = function onmessage(event) {
 }
 
 function draw() {
+    const start = performance.now();
     const data = new Uint8ClampedArray(dimensions.width * dimensions.height * 4);
+
+    const c = { re: 0, im: 0 };
 
     for (let i = 0; i < data.length; i += 4) {
         let x = (i / 4) % dimensions.width;
         let y = (i / 4) / dimensions.width | 0;
         const ax = x + xOffset
 
-        const c = {
-            re: map(ax, 0, maxDimensions.width, xBounds.min, xBounds.max),
-            im: map(y, 0, maxDimensions.height, yBounds.min, yBounds.max)
-        }
+        c.re = map(ax, 0, maxDimensions.width, xBounds.min, xBounds.max);
+        c.im = map(y, 0, maxDimensions.height, yBounds.min, yBounds.max);
 
         const result = testMandelbrot(c, maxIters)
 
@@ -50,7 +51,8 @@ function draw() {
     }
 
     const buffer = data.buffer;
-    self.postMessage({ message: 'draw', buffer }, [buffer]);
+    const time = performance.now() - start;
+    self.postMessage({ message: 'draw', buffer, time }, [buffer]);
 }
 
 

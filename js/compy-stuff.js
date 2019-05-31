@@ -35,7 +35,7 @@ function testMandelbrot(c, maxIter = 200) {
 
         z = complexAdd(complexMult(z, z), c)
 
-        if (complexAbs(z) > 2) {
+        if (squareComplexAbs(z) > 4) {
             result.collapses = false
             break
         }
@@ -72,29 +72,21 @@ function determineHue(c, dimensions, xBounds, yBounds, maxIters = 200) {
 }
 
 function complexAdd(num1, num2) {
-
-    const result = {}
-
-    result.re = num1.re + num2.re
-    result.im = num1.im + num2.im
-
-    return result
+    return {
+        re: num1.re + num2.re,
+        im: num1.im + num2.im
+    }
 }
 
 function complexMult(num1, num2) {
-
-    const result = {}
-
-    result.re = (num1.re * num2.re) - (num1.im * num2.im)
-    result.im = (num1.re * num2.im) + (num1.im * num2.re)
-
-    return result
+    return {
+        re: (num1.re * num2.re) - (num1.im * num2.im),
+        im: (num1.re * num2.im) + (num1.im * num2.re)
+    }
 }
 
-function complexAbs(num) {
-    return Math.sqrt(
-        Math.pow(num.re, 2) + Math.pow(num.im, 2)
-    )
+function squareComplexAbs(num) {
+    return num.re * num.re + num.im * num.im;
 }
 
 function map(n, start1, stop1, start2, stop2, withinBounds) {
