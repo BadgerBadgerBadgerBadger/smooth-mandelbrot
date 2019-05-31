@@ -2,8 +2,6 @@ let canvas
 const width = 600
 const height = 450
 
-const painter = new Worker('/js/painter.js')
-
 function setup() {
 
     canvas = document.createElement('canvas')
@@ -13,15 +11,8 @@ function setup() {
     document.addEventListener('keydown', zoomListener, false)
     $(canvas).click(clickListener)
 
-    const offScreen = canvas.transferControlToOffscreen()
-
-    const message = {
-        message: 'setup',
-        canvas: offScreen
-    }
-    const transfers = [offScreen]
-
-    painter.postMessage(message, transfers)
+    const message = { message: 'setup', canvas };
+    painter_setup(message)
 
     document.querySelector('body').appendChild(canvas)
     log('setup done')
@@ -34,7 +25,7 @@ function clickListener(e) {
     const mouseX = e.pageX - parentOffset.left;
     const mouseY = e.pageY - parentOffset.top;
 
-    painter.postMessage({message: 'draw', mousePos: {x: mouseX, y: mouseY}})
+    painter_draw({ mousePos: { x: mouseX, y: mouseY } })
 }
 
 function zoomListener(event) {
@@ -48,7 +39,7 @@ function zoomListener(event) {
         if (event.keyCode === 38) {
             zoom = -zoom
         }
-        painter.postMessage({message: 'draw', zoom})
+        painter_draw({ zoom })
     }
 }
 
