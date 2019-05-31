@@ -1,7 +1,7 @@
 let ctx
 let drawing = false
 
-const numOfAcolytes =  navigator.hardwareConcurrency
+const numOfAcolytes =  navigator.hardwareConcurrency || 4
 let acolytes
 let segmentLength
 
