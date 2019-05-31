@@ -33,7 +33,8 @@ function testMandelbrot(c, maxIter = 200) {
 
         result.iterBeforeCollapse++
 
-        z = complexAdd(complexMult(z, z), c)
+        complexSquare(z);
+        complexAdd(z, c);
 
         if (squareComplexAbs(z) > 4) {
             result.collapses = false
@@ -71,18 +72,15 @@ function determineHue(c, dimensions, xBounds, yBounds, maxIters = 200) {
     }
 }
 
-function complexAdd(num1, num2) {
-    return {
-        re: num1.re + num2.re,
-        im: num1.im + num2.im
-    }
+function complexAdd(c, num2) {
+    c.re += num2.re;
+    c.im += num2.im;
 }
 
-function complexMult(num1, num2) {
-    return {
-        re: (num1.re * num2.re) - (num1.im * num2.im),
-        im: (num1.re * num2.im) + (num1.im * num2.re)
-    }
+function complexSquare(c) {
+    const re = (c.re * c.re) - (c.im * c.im);
+    c.im = (c.re * c.im) * 2;
+    c.re = re;
 }
 
 function squareComplexAbs(num) {
