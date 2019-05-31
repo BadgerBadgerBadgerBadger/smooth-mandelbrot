@@ -2,12 +2,11 @@ importScripts('https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js')
 importScripts('/js/compy-stuff.js')
 
 let id
-let canvas
-let ctx
 let xBounds
 let yBounds
 let xOffset
 let maxDimensions
+let dimensions
 let maxIters
 
 let drawing = false
@@ -17,9 +16,7 @@ self.onmessage = function onmessage(event) {
     switch (event.data.message) {
 
         case 'setup':
-            ({id, canvas, xOffset, xBounds, yBounds, maxDimensions, maxIters} = event.data)
-            ctx = canvas.getContext('2d')
-
+            ({ id, xOffset, xBounds, yBounds, dimensions, maxDimensions, maxIters } = event.data)
             draw()
             break
 
@@ -29,45 +26,55 @@ self.onmessage = function onmessage(event) {
     }
 }
 
-function draw() {
+async function draw() {
+    const data = new Uint8ClampedArray(dimensions.width * dimensions.height * 4);
 
-    if (drawing) {
-        return
-    }
+    for (let i = 0; i < data.length; i += 4) {
+        let x = (i / 4) % dimensions.width;
+        let y = (i / 4) / dimensions.width | 0;
+        const ax = x + xOffset
 
-    if (!canvas) {
-        return
-    }
-
-    drawing = true
-
-    for (let x = 0; x < canvas.width; x++) {
-        for (let y = 0; y < canvas.height; y++) {
-
-            const ax = x + xOffset
-
-            const c = {
-                re: map(ax, 0, maxDimensions.width, xBounds.min, xBounds.max),
-                im: map(y, 0, maxDimensions.height, yBounds.min, yBounds.max)
-            }
-
-            const result = testMandelbrot(c, maxIters)
-
-            if (result.collapses) {
-                ctx.fillStyle = '#000000'
-            } else {
-
-                const hue = map(result.iterBeforeCollapse, 0, maxIters, 0, 360)
-                ctx.fillStyle = `hsl(${hue}, 100%, 50%)`
-            }
-
-            ctx.fillRect(x, y, 1, 1)
+        const c = {
+            re: map(ax, 0, maxDimensions.width, xBounds.min, xBounds.max),
+            im: map(y, 0, maxDimensions.height, yBounds.min, yBounds.max)
         }
+
+        const result = testMandelbrot(c, maxIters)
+
+        let rgb = [0, 0, 0];
+        if (!result.collapses) {
+            const hue = map(result.iterBeforeCollapse, 0, maxIters, 0, 1)
+            rgb = hslToRgb(hue, 1, .5);
+        }
+        data.set(rgb, i);
+        data[i + 3] = 255;
     }
 
-    const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const buffer = data.buffer;
+    self.postMessage({ message: 'draw', buffer }, [buffer]);
+}
 
-    self.postMessage({ message: 'draw', img })
+function hslToRgb(h, s, l) {
+    var r, g, b;
 
-    drawing = false
+    if (s == 0) {
+        r = g = b = l; // achromatic
+    } else {
+        var hue2rgb = function hue2rgb(p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        }
+
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }

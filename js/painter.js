@@ -25,28 +25,23 @@ function painter_setup(data) {
         acolyte.id = n
         acolyte.xOffset = xOffset
         acolyte.segmentLength = segmentLength
+        acolyte.dimensions = {
+            width: segmentLength,
+            height: canvas.height
+        };
 
-        acolyte.canvas = new OffscreenCanvas(segmentLength, canvas.height)
-        acolyte.canvas.width = segmentLength
-        acolyte.canvas.height = canvas.height
-
-        const offScreenSegment = acolyte.canvas
-
-        acolyte.postMessage(
-            {
-                message: 'setup',
-                canvas: offScreenSegment,
-                maxDimensions: {
-                    width: canvas.width,
-                    height: canvas.height
-                },
-                xOffset,
-                xBounds,
-                yBounds,
-                maxIters
+        acolyte.postMessage({
+            message: 'setup',
+            dimensions: acolyte.dimensions,
+            maxDimensions: {
+                width: canvas.width,
+                height: canvas.height
             },
-            [offScreenSegment]
-        )
+            xOffset,
+            xBounds,
+            yBounds,
+            maxIters
+        })
 
         return acolyte
     })
@@ -60,7 +55,9 @@ function onAcolyteMessage(event) {
     switch (event.data.message) {
 
         case 'draw':
-            ctx.putImageData(event.data.img, acolyte.xOffset, 0)
+            let data = new Uint8ClampedArray(event.data.buffer);
+            let idata = new ImageData(data, acolyte.dimensions.width, acolyte.dimensions.height);
+            ctx.putImageData(idata, acolyte.xOffset, 0)
             break
     }
 }
@@ -103,13 +100,7 @@ function painter_draw(data) {
         console.log(`New Bounds`, xBounds, yBounds)
     }
 
-    if (drawing || !ctx || !canvas) return;
-
-    drawing = true;
-
     for (const acolyte of acolytes) {
         acolyte.postMessage({ message: 'draw', xBounds, yBounds, maxIters })
     }
-
-    drawing = false
 }
