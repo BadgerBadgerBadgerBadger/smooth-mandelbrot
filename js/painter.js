@@ -101,7 +101,7 @@ function painter_center(x, y) {
 
 function painter_zoom_on(x, y, zoom) {
     const w = (bounds.x.max - bounds.x.min) * zoom;
-    const h = (bounds.y.max - bounds.y.min) * zoom;
+    const h = w * canvas.height / canvas.width;
 
     const shiftBoundsX = (x / canvas.width) * (bounds.x.max - bounds.x.min)
     const shiftBoundsY = (y / canvas.height) * (bounds.y.max - bounds.y.min)
