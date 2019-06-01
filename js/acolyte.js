@@ -2,8 +2,7 @@ importScripts('https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js')
 importScripts('/js/compy-stuff.js')
 
 let id
-let xBounds
-let yBounds
+let bounds
 let offset
 let maxDimensions
 let dimensions
@@ -16,12 +15,12 @@ self.onmessage = function onmessage(event) {
     switch (event.data.message) {
 
         case 'setup':
-            ({ id, offset, xBounds, yBounds, dimensions, maxDimensions, maxIters } = event.data)
+            ({ id, offset, bounds, dimensions, maxDimensions, maxIters } = event.data)
             draw()
             break
 
         case 'draw':
-            ({ xBounds, yBounds, maxIters } = event.data)
+            ({ bounds, maxIters } = event.data)
             draw()
     }
 }
@@ -36,8 +35,8 @@ function draw() {
         let x = offset.x + (i / 4) % dimensions.width;
         let y = offset.y + (i / 4) / dimensions.width | 0;
 
-        c.re = map(x, 0, maxDimensions.width, xBounds.min, xBounds.max);
-        c.im = map(y, 0, maxDimensions.height, yBounds.min, yBounds.max);
+        c.re = map(x, 0, maxDimensions.width, bounds.x.min, bounds.x.max);
+        c.im = map(y, 0, maxDimensions.height, bounds.y.min, bounds.y.max);
 
         const result = testMandelbrot(c, maxIters)
 

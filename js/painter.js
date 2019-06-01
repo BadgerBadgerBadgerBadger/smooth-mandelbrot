@@ -36,8 +36,7 @@ function painter_setup(data) {
                 height: canvas.height
             },
             offset: acolyte.offset,
-            xBounds,
-            yBounds,
+            bounds,
             maxIters
         })
 
@@ -60,43 +59,57 @@ function onAcolyteMessage(event) {
     }
 }
 
-function painter_draw(data) {
-    const mousePos = {
-        x: _.get(data, 'mousePos.x'),
-        y: _.get(data, 'mousePos.y')
-    }
 
-    const zoomBy = _.get(data, 'zoom')
-
-    if (mousePos.x !== undefined) {
-
-        const shiftX = mousePos.x - (canvas.width / 2)
-        const shiftY = mousePos.y - (canvas.height / 2)
-
-        const shiftBoundsX = (shiftX / canvas.width) * (xBounds.max - xBounds.min)
-        const shiftBoundsY = (shiftY / canvas.height) * (yBounds.max - yBounds.min)
-
-        xBounds.min += shiftBoundsX
-        xBounds.max += shiftBoundsX
-
-        yBounds.min += shiftBoundsY
-        yBounds.max += shiftBoundsY
-    } else if (zoomBy) {
-
-        const xRange = xBounds.max - xBounds.min
-        const yRange = yBounds.max - yBounds.min
-
-        const xZoom = (xRange / 4) * zoomBy
-        const yZoom = (yRange / 4) * zoomBy
-
-        xBounds.min -= xZoom
-        xBounds.max += xZoom
-
-        yBounds.min -= yZoom
-        yBounds.max += yZoom
-    }
-
+const update_bounds = _.throttle(function update_bounds(bounds) {
     for (const acolyte of acolytes) {
-        acolyte.postMessage({ message: 'draw', xBounds, yBounds, maxIters })
+        acolyte.postMessage({ message: 'draw', bounds, maxIters })
     }
+}, 150);
+
+function painter_zoom(zoomBy) {
+    const xRange = bounds.x.max - bounds.x.min
+    const yRange = bounds.y.max - bounds.y.min
+
+    const xZoom = xRange * zoomBy
+    const yZoom = yRange * zoomBy
+
+    bounds.x.min -= xZoom
+    bounds.x.max += xZoom
+
+    bounds.y.min -= yZoom
+    bounds.y.max += yZoom
+
+    update_bounds(bounds);
+}
+
+
+function painter_center(x, y) {
+    const shiftX = x - (canvas.width / 2)
+    const shiftY = y - (canvas.height / 2)
+
+    const shiftBoundsX = (shiftX / canvas.width) * (bounds.x.max - bounds.x.min)
+    const shiftBoundsY = (shiftY / canvas.height) * (bounds.y.max - bounds.y.min)
+
+    bounds.x.min += shiftBoundsX
+    bounds.x.max += shiftBoundsX
+
+    bounds.y.min += shiftBoundsY
+    bounds.y.max += shiftBoundsY
+
+    update_bounds(bounds);
+}
+
+function painter_zoom_on(x, y, zoom) {
+    const w = (bounds.x.max - bounds.x.min) * zoom;
+    const h = (bounds.y.max - bounds.y.min) * zoom;
+
+    const shiftBoundsX = (x / canvas.width) * (bounds.x.max - bounds.x.min)
+    const shiftBoundsY = (y / canvas.height) * (bounds.y.max - bounds.y.min)
+
+    bounds.x.min += shiftBoundsX - w * (x / canvas.width);
+    bounds.x.max = bounds.x.min + w;
+    bounds.y.min += shiftBoundsY - h * (y / canvas.height);
+    bounds.y.max = bounds.y.min + h;
+
+    update_bounds(bounds);
 }
