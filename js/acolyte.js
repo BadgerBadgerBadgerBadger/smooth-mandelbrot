@@ -38,10 +38,10 @@ function draw() {
         c.re = map(x, 0, maxDimensions.width, bounds.x.min, bounds.x.max);
         c.im = map(y, 0, maxDimensions.height, bounds.y.min, bounds.y.max);
 
-        const result = testMandelbrot(c, maxIters)
+        const iterBeforeCollapse = testMandelbrot(c, maxIters)
 
-        if (!result.collapses) {
-            const hue = map(result.iterBeforeCollapse, 0, maxIters, 0, 1)
+        if (iterBeforeCollapse < maxIters) {
+            const hue = iterBeforeCollapse / maxIters;
             const rgb = hslToRgb(hue, 1, .5);
             data.set(rgb, i);
         }

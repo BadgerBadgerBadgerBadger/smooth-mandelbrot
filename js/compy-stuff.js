@@ -18,32 +18,13 @@
  * @returns {MandeltestResult}
  */
 function testMandelbrot(c, maxIter = 200) {
-
-    let z = {
-        re: 0,
-        im: 0
-    }
-
-    const result = {
-        iterBeforeCollapse: 0,
-        collapses: true
-    }
-
+    let z = { re: 0, im: 0 }
     for (let i = 0; i < maxIter; i++) {
-
-        result.iterBeforeCollapse++
-
         complexSquare(z);
         complexAdd(z, c);
-
-        if (squareComplexAbs(z) > 4) {
-            result.collapses = false
-            break
-        }
-
+        if (squareComplexAbs(z) > 4) return i;
     }
-
-    return result
+    return maxIter;
 }
 
 /**
