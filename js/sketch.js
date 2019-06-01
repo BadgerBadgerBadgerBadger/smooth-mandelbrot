@@ -1,11 +1,13 @@
 let canvas = document.getElementById('fractal')
 const { width, height } = canvas.getBoundingClientRect();
-const bounds = { x: { min: -3, max: 1 }, y: { min: -1.5, max: 1.5 } }
-bounds.y.max = bounds.y.min + (bounds.x.max - bounds.x.min) * height / width;
+const bounds = { x: { min: -3, max: 2 }, y: { min: -1.3, max: 1.3 } }
 
 function setup() {
     canvas.width = width
     canvas.height = height
+    bounds.y.max = .5 * (bounds.x.max - bounds.x.min) * height / width;
+    bounds.y.min = -.5 * (bounds.x.max - bounds.x.min) * height / width;
+
     document.addEventListener('keydown', zoomListener, false);
     document.addEventListener('wheel', onWheel, { passive: false });
     $(canvas).click(clickListener)
