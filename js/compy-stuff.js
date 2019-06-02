@@ -6,16 +6,9 @@
  */
 
 /**
- * @typedef {Object} MandeltestResult
- *
- * @property {boolean} collapses
- * @property {number} iterBeforeCollapse
- */
-
-/**
  * @param {Complex} c
  * @param {number} [maxIter = 20]
- * @returns {MandeltestResult}
+ * @returns {number}
  */
 function testMandelbrot(c, maxIter = 200) {
     let z = { re: 0, im: 0 }
