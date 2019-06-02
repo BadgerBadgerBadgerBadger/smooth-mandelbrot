@@ -11,13 +11,34 @@
  * @returns {number}
  */
 function testMandelbrot(c, maxIter = 200) {
-    let z = { re: 0, im: 0 }
-    for (let i = 0; i < maxIter; i++) {
-        complexSquare(z);
-        complexAdd(z, c);
-        if (squareComplexAbs(z) > 4) return i;
+    if (!testCardioid(c) && !testBulb(c)) {
+        let z = { re: 0, im: 0 }
+        for (let i = 0; i < maxIter; i++) {
+            complexSquare(z);
+            complexAdd(z, c);
+            if (squareComplexAbs(z) > 4) return i;
+        }
     }
     return maxIter;
+}
+
+/**
+ * @param {Complex} c
+ * @returns {boolean}
+ */
+function testCardioid(c) {
+    const a = (c.re - 1 / 4);
+    const q = a * a + c.im * c.im;
+    return q * (q + a) <= .25 * c.im * c.im;
+}
+
+/**
+ * @param {Complex} c
+ * @returns {boolean}
+ */
+function testBulb(c) {
+    const a = c.re + 1;
+    return a * a + c.im * c.im <= 1 / 16;
 }
 
 /**
