@@ -28,6 +28,7 @@ self.onmessage = function onmessage(event) {
 function draw() {
     const start = performance.now();
     const data = new Uint8ClampedArray(dimensions.width * dimensions.height * 4);
+    const colormap = makeColorMap(maxIters);
 
     const c = { re: 0, im: 0 };
 
@@ -41,9 +42,9 @@ function draw() {
         const iterBeforeCollapse = testMandelbrot(c, maxIters)
 
         if (iterBeforeCollapse < maxIters) {
-            const hue = iterBeforeCollapse / maxIters;
-            const rgb = hslToRgb(hue, 1, .5);
-            data.set(rgb, i);
+            const idx = iterBeforeCollapse * 3;
+            const color = colormap.subarray(idx, idx + 3);
+            data.set(color, i);
         }
         data[i + 3] = 255; // alpha
     }
@@ -53,6 +54,19 @@ function draw() {
     self.postMessage({ message: 'draw', buffer, time }, [buffer]);
 }
 
+
+const colormaps = [];
+function makeColorMap(size) {
+    if (!colormaps[size]) {
+        const colormap = new Uint8ClampedArray(size * 3);
+        for (let i = 0; i < size; i++) {
+            const rgb = hslToRgb(i / size, 1, .5);
+            colormap.set(rgb, i * 3);
+        }
+        colormaps[size] = colormap;
+    }
+    return colormaps[size];
+}
 
 function hslToRgb(h, s, l) {
     var r, g, b;
