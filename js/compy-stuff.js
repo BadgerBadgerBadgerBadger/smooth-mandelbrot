@@ -1,9 +1,24 @@
-/**
- * @typedef {Object} Complex
- *
- * @property {number} re
- * @property {number} im
- */
+class Complex {
+    constructor(re, im) {
+        this.re = re;
+        this.im = im;
+    }
+
+    add(other) {
+        this.re += other.re;
+        this.im += other.im;
+    }
+
+    square() {
+        const re = this.re * this.re - this.im * this.im;
+        this.im = this.re * this.im * 2;
+        this.re = re;
+    }
+
+    squareAbs() {
+        return this.re * this.re + this.im * this.im;
+    }
+}
 
 /**
  * @param {Complex} c
@@ -12,11 +27,11 @@
  */
 function testMandelbrot(c, maxIter = 200) {
     if (!testCardioid(c) && !testBulb(c)) {
-        let z = { re: 0, im: 0 }
+        let z = new Complex(0, 0);
         for (let i = 0; i < maxIter; i++) {
-            complexSquare(z);
-            complexAdd(z, c);
-            if (squareComplexAbs(z) > 4) return i;
+            z.square();
+            z.add(c);
+            if (z.squareAbs() > 4) return i;
         }
     }
     return maxIter;
@@ -39,47 +54,6 @@ function testCardioid(c) {
 function testBulb(c) {
     const a = c.re + 1;
     return a * a + c.im * c.im <= 1 / 16;
-}
-
-/**
- * @param {Complex} c
- * @param {{width: number, height: number}} dimensions
- * @param {{min: number, max: number}} xBounds
- * @param {{min: number, max: number}} yBounds
- * @param {number} maxIters
- */
-function determineHue(c, dimensions, xBounds, yBounds, maxIters = 200) {
-
-    const x = c.x
-    const y = c.y
-
-    let a = map(x, 0, dimensions.width, xBounds.min, xBounds.max)
-    let b = map(y, 0, dimensions.height, yBounds.min, yBounds.max)
-
-    const result = testMandelbrot({ re: a, im: b }, maxIters)
-
-    if (result.collapses) {
-        return [0]
-    } else {
-
-        const hue = 360 - map(result.iterBeforeCollapse, 0, maxIters, 0, 360)
-        return [hue, 255, 255]
-    }
-}
-
-function complexAdd(c, num2) {
-    c.re += num2.re;
-    c.im += num2.im;
-}
-
-function complexSquare(c) {
-    const re = (c.re * c.re) - (c.im * c.im);
-    c.im = (c.re * c.im) * 2;
-    c.re = re;
-}
-
-function squareComplexAbs(num) {
-    return num.re * num.re + num.im * num.im;
 }
 
 function map(n, start1, stop1, start2, stop2, withinBounds) {

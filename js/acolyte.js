@@ -30,7 +30,7 @@ function draw() {
     const data = new Uint8ClampedArray(dimensions.width * dimensions.height * 4);
     const colormap = makeColorMap(maxIters);
 
-    const c = { re: 0, im: 0 };
+    const c = new Complex(0, 0);
 
     for (let i = 0; i < data.length; i += 4) {
         let x = offset.x + (i / 4) % dimensions.width;
