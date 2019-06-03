@@ -1,5 +1,4 @@
-importScripts('https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js')
-importScripts('/js/compy-stuff.js')
+importScripts('compy-stuff.js')
 
 let id
 let bounds
