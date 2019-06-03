@@ -8,63 +8,82 @@ let segmentLength
 
 let maxIters = 256
 
-function painter_setup(data) {
-    ctx = canvas.getContext('2d')
+class Acolyte {
+    constructor(i) {
+        this.id = i;
+        this.idle = true;
+        this.nextMsg = null;
+        this.worker = new Worker('js/acolyte.js');
+        this.segmentLength = canvas.height / numOfAcolytes | 0;
+        this.offset = { x: 0, y: i * this.segmentLength };
 
-    segmentLength = canvas.height / numOfAcolytes | 0
-
-    acolytes = _.times(numOfAcolytes, n => {
-
-        const yOffset = n * segmentLength
-        const acolyte = new Worker('/js/acolyte.js')
-
-        acolyte.onmessage = onAcolyteMessage
-
-        acolyte.id = n
-        acolyte.offset = { x: 0, y: yOffset }
-        acolyte.segmentLength = segmentLength
-        acolyte.dimensions = {
+        this.dimensions = {
             width: canvas.width,
-            height: segmentLength
+            height: this.segmentLength
         };
-
-        acolyte.postMessage({
+        this.worker.onmessage = this.messageHandler.bind(this);
+        this.setup();
+    }
+    setup() {
+        this.sendMessage({
             message: 'setup',
-            dimensions: acolyte.dimensions,
+            dimensions: this.dimensions,
             maxDimensions: {
                 width: canvas.width,
                 height: canvas.height
             },
-            offset: acolyte.offset,
+            offset: this.offset,
             bounds,
             maxIters
         })
-
-        return acolyte
-    })
-}
-
-function onAcolyteMessage(event) {
-
-    const acolyte = event.currentTarget
-    log(`Message from acolyte: ${acolyte.id}`)
-
-    switch (event.data.message) {
-        case 'draw':
-            console.log(`Rendered tile in ${event.data.time}ms`)
-            let data = new Uint8ClampedArray(event.data.buffer);
-            let idata = new ImageData(data, acolyte.dimensions.width, acolyte.dimensions.height);
-            ctx.putImageData(idata, acolyte.offset.x, acolyte.offset.y)
-            break
+    }
+    draw(bounds) {
+        this.sendMessage({ message: 'draw', bounds, maxIters })
+    }
+    sendMessage(msg) {
+        if (this.idle) {
+            this.idle = false;
+            this.worker.postMessage(msg);
+            this.nextMsg = null;
+        } else {
+            this.nextMsg = msg;
+        }
+    }
+    messageHandler(event) {
+        this.idle = true;
+        if (this.nextMsg) this.sendMessage(this.nextMsg);
+        switch (event.data.message) {
+            case 'draw':
+                console.log(`Rendered tile in ${event.data.time}ms`)
+                const {
+                    dimensions: { width, height },
+                    offset: { x, y }
+                } = this;
+                const { buffer } = event.data;
+                draw_tile(buffer, x, y, width, height);
+                break
+        }
     }
 }
 
+function painter_setup(data) {
+    ctx = canvas.getContext('2d')
+    acolytes = Array(numOfAcolytes).fill()
+        .map((_, i) => new Acolyte(i));
+}
 
-const update_bounds = _.throttle(function update_bounds(bounds) {
+
+const update_bounds = function update_bounds(bounds) {
     for (const acolyte of acolytes) {
-        acolyte.postMessage({ message: 'draw', bounds, maxIters })
+        acolyte.draw(bounds)
     }
-}, 150);
+};
+
+function draw_tile(buffer, x, y, w, h) {
+    let data = new Uint8ClampedArray(buffer);
+    let idata = new ImageData(data, w, h);
+    ctx.putImageData(idata, x, y);
+}
 
 function painter_zoom(zoomBy) {
     const xRange = bounds.x.max - bounds.x.min

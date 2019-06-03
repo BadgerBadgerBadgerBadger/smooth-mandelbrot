@@ -10,7 +10,7 @@ function setup() {
 
     document.addEventListener('keydown', zoomListener, false);
     document.addEventListener('wheel', onWheel, { passive: false });
-    $(canvas).click(clickListener)
+    document.addEventListener('click', clickListener, { passive: true });
 
     const message = { message: 'setup', canvas };
     painter_setup(message)
@@ -19,13 +19,7 @@ function setup() {
 }
 
 function clickListener(e) {
-
-    const parentOffset = $(this).offset()
-
-    const mouseX = e.pageX - parentOffset.left;
-    const mouseY = e.pageY - parentOffset.top;
-
-    painter_zoom_on(mouseX, mouseY, .7);
+    painter_zoom_on(e.offsetX, e.offsetY, .75);
 }
 
 function zoomListener(event) {
@@ -43,10 +37,7 @@ function zoomListener(event) {
 
 function onWheel(e) {
     e.preventDefault();
-    const parentOffset = $(canvas).offset()
-    const mouseX = e.pageX - parentOffset.left;
-    const mouseY = e.pageY - parentOffset.top;
-    painter_zoom_on(mouseX, mouseY, 1 + e.deltaY / 100)
+    painter_zoom_on(e.offsetX, e.offsetY, 1 + e.deltaY / 100)
 }
 
 setup()
