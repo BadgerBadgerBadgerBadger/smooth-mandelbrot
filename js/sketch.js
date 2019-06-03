@@ -10,16 +10,21 @@ function setup() {
 
     document.addEventListener('keydown', zoomListener, false);
     document.addEventListener('wheel', onWheel, { passive: false });
-    document.addEventListener('click', clickListener, { passive: true });
+    document.addEventListener('dblclick', clickListener, { passive: false });
+    document.addEventListener('mousemove', mouseListener, { passive: true });
 
-    const message = { message: 'setup', canvas };
-    painter_setup(message)
-
-    log('setup done')
+    painter_setup()
 }
 
 function clickListener(e) {
-    painter_zoom_on(e.offsetX, e.offsetY, .75);
+    e.preventDefault();
+    painter_zoom_on(e.offsetX, e.offsetY, 0.5);
+}
+
+function mouseListener(e) {
+    if (e.buttons & 1) {
+        painter_move(e.movementX, e.movementY);
+    }
 }
 
 function zoomListener(event) {
@@ -27,9 +32,8 @@ function zoomListener(event) {
     if (event.altKey && event.keyCode === 38 || event.keyCode === 40) {
 
         event.preventDefault()
-
-        let zoom = 0.25
-        if (event.keyCode === 38) zoom = -zoom;
+        const z = 0.25
+        let zoom = (event.keyCode === 38) ? z : -z;
 
         painter_zoom(zoom)
     }

@@ -66,7 +66,7 @@ class Acolyte {
     }
 }
 
-function painter_setup(data) {
+function painter_setup() {
     ctx = canvas.getContext('2d')
     acolytes = Array(numOfAcolytes).fill()
         .map((_, i) => new Acolyte(i));
@@ -86,18 +86,26 @@ function draw_tile(buffer, x, y, w, h) {
 }
 
 function painter_zoom(zoomBy) {
-    const xRange = bounds.x.max - bounds.x.min
-    const yRange = bounds.y.max - bounds.y.min
+    const dx = (bounds.x.max - bounds.x.min) / 2;
+    const dy = (bounds.y.max - bounds.y.min) / 2;
 
-    const xZoom = xRange * zoomBy
-    const yZoom = yRange * zoomBy
+    bounds.x.min += dx * zoomBy
+    bounds.x.max -= dx * zoomBy
+    bounds.y.min += dy * zoomBy
+    bounds.y.max -= dy * zoomBy
 
-    bounds.x.min -= xZoom
-    bounds.x.max += xZoom
+    update_bounds(bounds);
+}
 
-    bounds.y.min -= yZoom
-    bounds.y.max += yZoom
-
+function painter_move(x, y) {
+    const w = bounds.x.max - bounds.x.min
+    const h = bounds.y.max - bounds.y.min
+    const dx = -x * w / canvas.width
+    const dy = -y * h / canvas.width
+    bounds.x.min += dx
+    bounds.x.max += dx
+    bounds.y.min += dy
+    bounds.y.max += dy
     update_bounds(bounds);
 }
 
