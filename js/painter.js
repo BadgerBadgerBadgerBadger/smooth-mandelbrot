@@ -60,32 +60,32 @@ class Acolyte {
                     offset: { x, y }
                 } = this;
                 const { buffer } = event.data;
-                draw_tile(buffer, x, y, width, height);
+                drawTile(buffer, x, y, width, height);
                 break
         }
     }
 }
 
-function painter_setup() {
+function painterSetup() {
     ctx = canvas.getContext('2d')
     acolytes = Array(numOfAcolytes).fill()
         .map((_, i) => new Acolyte(i));
 }
 
 
-const update_bounds = function update_bounds(bounds) {
+const updateBounds = function updateBounds(bounds) {
     for (const acolyte of acolytes) {
         acolyte.draw(bounds)
     }
 };
 
-function draw_tile(buffer, x, y, w, h) {
+function drawTile(buffer, x, y, w, h) {
     let data = new Uint8ClampedArray(buffer);
     let idata = new ImageData(data, w, h);
     ctx.putImageData(idata, x, y);
 }
 
-function painter_zoom(zoomBy) {
+function painterZoom(zoomBy) {
     const dx = (bounds.x.max - bounds.x.min) / 2;
     const dy = (bounds.y.max - bounds.y.min) / 2;
 
@@ -94,10 +94,10 @@ function painter_zoom(zoomBy) {
     bounds.y.min += dy * zoomBy
     bounds.y.max -= dy * zoomBy
 
-    update_bounds(bounds);
+    updateBounds(bounds);
 }
 
-function painter_move(x, y) {
+function painterMove(x, y) {
     const w = bounds.x.max - bounds.x.min
     const h = bounds.y.max - bounds.y.min
     const dx = -x * w / canvas.width
@@ -106,11 +106,11 @@ function painter_move(x, y) {
     bounds.x.max += dx
     bounds.y.min += dy
     bounds.y.max += dy
-    update_bounds(bounds);
+    updateBounds(bounds);
 }
 
 
-function painter_center(x, y) {
+function painterCenter(x, y) {
     const shiftX = x - (canvas.width / 2)
     const shiftY = y - (canvas.height / 2)
 
@@ -123,10 +123,10 @@ function painter_center(x, y) {
     bounds.y.min += shiftBoundsY
     bounds.y.max += shiftBoundsY
 
-    update_bounds(bounds);
+    updateBounds(bounds);
 }
 
-function painter_zoom_on(x, y, zoom) {
+function painterZoomOn(x, y, zoom) {
     const w = (bounds.x.max - bounds.x.min) * zoom;
     const h = w * canvas.height / canvas.width;
 
@@ -138,5 +138,5 @@ function painter_zoom_on(x, y, zoom) {
     bounds.y.min += shiftBoundsY - h * (y / canvas.height);
     bounds.y.max = bounds.y.min + h;
 
-    update_bounds(bounds);
+    updateBounds(bounds);
 }

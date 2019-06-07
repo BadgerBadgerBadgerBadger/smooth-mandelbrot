@@ -13,17 +13,17 @@ function setup() {
     document.addEventListener('dblclick', clickListener, { passive: false });
     document.addEventListener('mousemove', mouseListener, { passive: true });
 
-    painter_setup()
+    painterSetup()
 }
 
 function clickListener(e) {
     e.preventDefault();
-    painter_zoom_on(e.offsetX, e.offsetY, 0.5);
+    painterZoomOn(e.offsetX, e.offsetY, 0.5);
 }
 
 function mouseListener(e) {
     if (e.buttons & 1) {
-        painter_move(e.movementX, e.movementY);
+        painterMove(e.movementX, e.movementY);
     }
 }
 
@@ -35,13 +35,13 @@ function zoomListener(event) {
         const z = 0.25
         let zoom = (event.keyCode === 38) ? z : -z;
 
-        painter_zoom(zoom)
+        painterZoom(zoom)
     }
 }
 
 function onWheel(e) {
     e.preventDefault();
-    painter_zoom_on(e.offsetX, e.offsetY, 1 + e.deltaY / 100)
+    painterZoomOn(e.offsetX, e.offsetY, 1 + e.deltaY / 100)
 }
 
 setup()
