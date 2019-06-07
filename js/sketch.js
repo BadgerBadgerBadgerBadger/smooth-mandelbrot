@@ -1,40 +1,30 @@
-let canvas
-const width = 600
-const height = 450
-
-const painter = new Worker('/js/painter.js')
+let canvas = document.getElementById('fractal')
+const { width, height } = canvas.getBoundingClientRect();
+const bounds = { x: { min: -3, max: 2 }, y: { min: -1.3, max: 1.3 } }
 
 function setup() {
-
-    canvas = document.createElement('canvas')
-
     canvas.width = width
     canvas.height = height
-    document.addEventListener('keydown', zoomListener, false)
-    $(canvas).click(clickListener)
+    bounds.y.max = .5 * (bounds.x.max - bounds.x.min) * height / width;
+    bounds.y.min = -.5 * (bounds.x.max - bounds.x.min) * height / width;
 
-    const offScreen = canvas.transferControlToOffscreen()
+    document.addEventListener('keydown', zoomListener, false);
+    document.addEventListener('wheel', onWheel, { passive: false });
+    document.addEventListener('dblclick', clickListener, { passive: false });
+    document.addEventListener('mousemove', mouseListener, { passive: true });
 
-    const message = {
-        message: 'setup',
-        canvas: offScreen
-    }
-    const transfers = [offScreen]
-
-    painter.postMessage(message, transfers)
-
-    document.querySelector('body').appendChild(canvas)
-    log('setup done')
+    painterSetup()
 }
 
 function clickListener(e) {
+    e.preventDefault();
+    painterZoomOn(e.offsetX, e.offsetY, 0.5);
+}
 
-    const parentOffset = $(this).offset()
-
-    const mouseX = e.pageX - parentOffset.left;
-    const mouseY = e.pageY - parentOffset.top;
-
-    painter.postMessage({message: 'draw', mousePos: {x: mouseX, y: mouseY}})
+function mouseListener(e) {
+    if (e.buttons & 1) {
+        painterMove(e.movementX, e.movementY);
+    }
 }
 
 function zoomListener(event) {
@@ -42,14 +32,16 @@ function zoomListener(event) {
     if (event.altKey && event.keyCode === 38 || event.keyCode === 40) {
 
         event.preventDefault()
+        const z = 0.25
+        let zoom = (event.keyCode === 38) ? z : -z;
 
-        let zoom = 1
-
-        if (event.keyCode === 38) {
-            zoom = -zoom
-        }
-        painter.postMessage({message: 'draw', zoom})
+        painterZoom(zoom)
     }
+}
+
+function onWheel(e) {
+    e.preventDefault();
+    painterZoomOn(e.offsetX, e.offsetY, 1 + e.deltaY / 100)
 }
 
 setup()

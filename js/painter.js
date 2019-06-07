@@ -1,141 +1,142 @@
-
-importScripts('https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.4/randomColor.js')
-importScripts('https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js')
-importScripts('/js/compy-stuff.js')
-importScripts('/js/util.js')
-
-let canvas
 let ctx
-
 let drawing = false
 
-const numOfAcolytes = 4
+const numOfAcolytes = navigator.hardwareConcurrency || 4
 let acolytes
 let segmentLength
 
-const xBounds = { min: -3, max: 1 }
-const yBounds = { min: -1.5, max: 1.5 }
 
 let maxIters = 256
 
-self.onmessage = function onmessage(event) {
+class Acolyte {
+    constructor(i) {
+        this.id = i;
+        this.idle = true;
+        this.nextMsg = null;
+        this.worker = new Worker('js/acolyte.js');
+        this.segmentLength = canvas.height / numOfAcolytes | 0;
+        this.offset = { x: 0, y: i * this.segmentLength };
 
-    switch (event.data.message) {
-
-        case 'setup':
-            canvas = event.data.canvas
-            ctx = canvas.getContext('2d')
-
-            segmentLength = canvas.width / numOfAcolytes
-
-            acolytes = _.times(numOfAcolytes, n => {
-
-                const xOffset = n * segmentLength
-                const acolyte = new Worker('/js/acolyte.js')
-
-                acolyte.onmessage = onAcolyteMessage
-
-                acolyte.id = n
-                acolyte.xOffset = xOffset
-                acolyte.segmentLength = segmentLength
-
-                acolyte.canvas = new OffscreenCanvas(segmentLength, canvas.height)
-                acolyte.canvas.width = segmentLength
-                acolyte.canvas.height = canvas.height
-
-                const offScreenSegment = acolyte.canvas
-
-                acolyte.postMessage(
-                    {
-                        message: 'setup',
-                        canvas: offScreenSegment,
-                        maxDimensions: {
-                            width: canvas.width,
-                            height: canvas.height
-                        },
-                        xOffset,
-                        xBounds,
-                        yBounds,
-                        maxIters
-                    },
-                    [offScreenSegment]
-                )
-
-                return acolyte
-            })
-            break
-
-        case 'draw':
-
-            const mousePos = {
-                x: _.get(event.data, 'mousePos.x'),
-                y: _.get(event.data, 'mousePos.y')
-            }
-
-            const zoomBy = _.get(event.data, 'zoom')
-
-            if (mousePos.x !== undefined) {
-
-                const shiftX = mousePos.x - (canvas.width / 2)
-                const shiftY = mousePos.y - (canvas.height / 2)
-
-                const shiftBoundsX = (shiftX / canvas.width) * (xBounds.max - xBounds.min)
-                const shiftBoundsY = (shiftY / canvas.height) * (yBounds.max - yBounds.min)
-
-                xBounds.min += shiftBoundsX
-                xBounds.max += shiftBoundsX
-
-                yBounds.min += shiftBoundsY
-                yBounds.max += shiftBoundsY
-            } else if (zoomBy) {
-
-                const xRange = xBounds.max - xBounds.min
-                const yRange = yBounds.max - yBounds.min
-
-                const xZoom = (xRange / 4) * zoomBy
-                const yZoom = (yRange / 4) * zoomBy
-
-                xBounds.min -= xZoom
-                xBounds.max += xZoom
-
-                yBounds.min -= yZoom
-                yBounds.max += yZoom
-
-                console.log(`New Bounds`, xBounds, yBounds)
-            }
-
-            draw()
+        this.dimensions = {
+            width: canvas.width,
+            height: this.segmentLength
+        };
+        this.worker.onmessage = this.messageHandler.bind(this);
+        this.setup();
+    }
+    setup() {
+        this.sendMessage({
+            message: 'setup',
+            dimensions: this.dimensions,
+            maxDimensions: {
+                width: canvas.width,
+                height: canvas.height
+            },
+            offset: this.offset,
+            bounds,
+            maxIters
+        })
+    }
+    draw(bounds) {
+        this.sendMessage({ message: 'draw', bounds, maxIters })
+    }
+    sendMessage(msg) {
+        if (this.idle) {
+            this.idle = false;
+            this.worker.postMessage(msg);
+            this.nextMsg = null;
+        } else {
+            this.nextMsg = msg;
+        }
+    }
+    messageHandler(event) {
+        this.idle = true;
+        if (this.nextMsg) this.sendMessage(this.nextMsg);
+        switch (event.data.message) {
+            case 'draw':
+                console.log(`Rendered tile in ${event.data.time}ms`)
+                const {
+                    dimensions: { width, height },
+                    offset: { x, y }
+                } = this;
+                const { buffer } = event.data;
+                drawTile(buffer, x, y, width, height);
+                break
+        }
     }
 }
 
-function onAcolyteMessage(event) {
-
-    const acolyte = event.currentTarget
-    log(`Message from acolyte: ${acolyte.id}`)
-
-    switch (event.data.message) {
-
-        case 'draw':
-            ctx.putImageData(event.data.img, acolyte.xOffset, 0)
-            break
-    }
+function painterSetup() {
+    ctx = canvas.getContext('2d')
+    acolytes = Array(numOfAcolytes).fill()
+        .map((_, i) => new Acolyte(i));
 }
 
-function draw() {
 
-    if (drawing) {
-        return
-    }
-
-    if (!ctx || !canvas) {
-        return
-    }
-
-    drawing = true
-
+const updateBounds = function updateBounds(bounds) {
     for (const acolyte of acolytes) {
-        acolyte.postMessage({ message: 'draw',  xBounds, yBounds, maxIters })
+        acolyte.draw(bounds)
     }
+};
 
-    drawing = false
+function drawTile(buffer, x, y, w, h) {
+    let data = new Uint8ClampedArray(buffer);
+    let idata = new ImageData(data, w, h);
+    ctx.putImageData(idata, x, y);
+}
+
+function painterZoom(zoomBy) {
+    const dx = (bounds.x.max - bounds.x.min) / 2;
+    const dy = (bounds.y.max - bounds.y.min) / 2;
+
+    bounds.x.min += dx * zoomBy
+    bounds.x.max -= dx * zoomBy
+    bounds.y.min += dy * zoomBy
+    bounds.y.max -= dy * zoomBy
+
+    updateBounds(bounds);
+}
+
+function painterMove(x, y) {
+    const w = bounds.x.max - bounds.x.min
+    const h = bounds.y.max - bounds.y.min
+    const dx = -x * w / canvas.width
+    const dy = -y * h / canvas.width
+    bounds.x.min += dx
+    bounds.x.max += dx
+    bounds.y.min += dy
+    bounds.y.max += dy
+    updateBounds(bounds);
+}
+
+
+function painterCenter(x, y) {
+    const shiftX = x - (canvas.width / 2)
+    const shiftY = y - (canvas.height / 2)
+
+    const shiftBoundsX = (shiftX / canvas.width) * (bounds.x.max - bounds.x.min)
+    const shiftBoundsY = (shiftY / canvas.height) * (bounds.y.max - bounds.y.min)
+
+    bounds.x.min += shiftBoundsX
+    bounds.x.max += shiftBoundsX
+
+    bounds.y.min += shiftBoundsY
+    bounds.y.max += shiftBoundsY
+
+    updateBounds(bounds);
+}
+
+function painterZoomOn(x, y, zoom) {
+    const w = (bounds.x.max - bounds.x.min) * zoom;
+    const h = w * canvas.height / canvas.width;
+
+    const shiftBoundsX = (x / canvas.width) * (bounds.x.max - bounds.x.min)
+    const shiftBoundsY = (y / canvas.height) * (bounds.y.max - bounds.y.min)
+
+    bounds.x.min += shiftBoundsX - w * (x / canvas.width);
+    bounds.x.max = bounds.x.min + w;
+    bounds.y.min += shiftBoundsY - h * (y / canvas.height);
+    bounds.y.max = bounds.y.min + h;
+
+    updateBounds(bounds);
 }

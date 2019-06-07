@@ -1,100 +1,59 @@
-/**
- * @typedef {Object} Complex
- *
- * @property {number} re
- * @property {number} im
- */
+class Complex {
+    constructor(re, im) {
+        this.re = re;
+        this.im = im;
+    }
 
-/**
- * @typedef {Object} MandeltestResult
- *
- * @property {boolean} collapses
- * @property {number} iterBeforeCollapse
- */
+    add(other) {
+        this.re += other.re;
+        this.im += other.im;
+    }
+
+    square() {
+        const re = this.re * this.re - this.im * this.im;
+        this.im = this.re * this.im * 2;
+        this.re = re;
+    }
+
+    squareAbs() {
+        return this.re * this.re + this.im * this.im;
+    }
+}
 
 /**
  * @param {Complex} c
  * @param {number} [maxIter = 20]
- * @returns {MandeltestResult}
+ * @returns {number}
  */
 function testMandelbrot(c, maxIter = 200) {
-
-    let z = {
-        re: 0,
-        im: 0
-    }
-
-    const result = {
-        iterBeforeCollapse: 0,
-        collapses: true
-    }
-
-    for (let i = 0; i < maxIter; i++) {
-
-        result.iterBeforeCollapse++
-
-        z = complexAdd(complexMult(z, z), c)
-
-        if (complexAbs(z) > 2) {
-            result.collapses = false
-            break
+    if (!testCardioid(c) && !testBulb(c)) {
+        let z = new Complex(0, 0);
+        for (let i = 0; i < maxIter; i++) {
+            z.square();
+            z.add(c);
+            if (z.squareAbs() > 4) return i;
         }
-
     }
-
-    return result
+    return maxIter;
 }
 
 /**
  * @param {Complex} c
- * @param {{width: number, height: number}} dimensions
- * @param {{min: number, max: number}} xBounds
- * @param {{min: number, max: number}} yBounds
- * @param {number} maxIters
+ * @returns {boolean}
  */
-function determineHue(c, dimensions, xBounds, yBounds, maxIters = 200) {
-
-    const x = c.x
-    const y = c.y
-
-    let a = map(x, 0, dimensions.width, xBounds.min, xBounds.max)
-    let b = map(y, 0, dimensions.height, yBounds.min, yBounds.max)
-
-    const result = testMandelbrot({ re: a, im: b }, maxIters)
-
-    if (result.collapses) {
-        return [0]
-    } else {
-
-        const hue = 360 - map(result.iterBeforeCollapse, 0, maxIters, 0, 360)
-        return [hue, 255, 255]
-    }
+function testCardioid(c) {
+    const a = (c.re - 1 / 4);
+    const q = a * a + c.im * c.im;
+    return q * (q + a) <= .25 * c.im * c.im;
 }
 
-function complexAdd(num1, num2) {
-
-    const result = {}
-
-    result.re = num1.re + num2.re
-    result.im = num1.im + num2.im
-
-    return result
-}
-
-function complexMult(num1, num2) {
-
-    const result = {}
-
-    result.re = (num1.re * num2.re) - (num1.im * num2.im)
-    result.im = (num1.re * num2.im) + (num1.im * num2.re)
-
-    return result
-}
-
-function complexAbs(num) {
-    return Math.sqrt(
-        Math.pow(num.re, 2) + Math.pow(num.im, 2)
-    )
+/**
+ * @param {Complex} c
+ * @returns {boolean}
+ */
+function testBulb(c) {
+    const a = c.re + 1;
+    return a * a + c.im * c.im <= 1 / 16;
 }
 
 function map(n, start1, stop1, start2, stop2, withinBounds) {
