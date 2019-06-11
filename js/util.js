@@ -1,7 +1,6 @@
-
 const DEBUG = false
 
-function log() {
+function log () {
     if (DEBUG) {
         console.log(...arguments)
     }
